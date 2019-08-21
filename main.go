@@ -22,7 +22,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fp, err := os.Open(filename)
+	fp, err := os.Open(strings.Replace(filename, "file://", "", -1))
 	defer fp.Close()
 	if err != nil {
 		panic(err)
@@ -58,9 +58,7 @@ func Parse(src string) ([]string, antlr.ParserRuleContext) {
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewSOQLParser(stream)
 	p.RemoveErrorListeners()
-	listener := &ErrorListener{
-		parser: p,
-	}
+	listener := NewErrorListener(p)
 	p.AddErrorListener(listener)
 	p.BuildParseTrees = true
 	tree := p.Soql_query()
@@ -73,6 +71,12 @@ type ErrorListener struct {
 	ExpectedTokens []string
 }
 
+func NewErrorListener(p antlr.Parser) *ErrorListener{
+	return &ErrorListener{
+		parser: p,
+		ExpectedTokens: []string{},
+	}
+}
 func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
 	//stream := l.parser.GetTokenStream()
 	//fmt.Println(l.parser.GetRuleNames()[l.parser.GetParserRuleContext().GetRuleIndex()])
